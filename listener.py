@@ -1,5 +1,13 @@
 from django.core.management import setup_environ
-from candidatefeed import settings
+
+# If app is not in your PYTHONPATH, append it to sys.path
+#import sys
+#import os
+#print os.path.join(os.path.abspath('.'))
+# sys.path.append('/Users/mike/Documents/candidatefeed/')
+
+# This must be AFTER you update sys.path
+import settings
 setup_environ(settings)
 
 import tweepy
@@ -12,12 +20,14 @@ class TweetParser:
 		self.status = status
 
 	def save(self):
+		urlstr = ''
 		for url in self.status.entities['urls']:
 			urlstr = url['expanded_url']
 		print self.status.text
-
-		url = URL(url=urlstr)
-		url.save()
+		
+		if len(urlstr) > 0:
+			url = URL(url=urlstr)
+			url.save()
 		candidate = Candidate.objects.filter(name__endswith='Obama')
 		newtweet = Tweet(created_at=self.status.created_at, text=self.status.text, user=self.status.user.screen_name, raw_json=self.status.json, urls=[url], candidates=[candidate])
 		newtweet.save()

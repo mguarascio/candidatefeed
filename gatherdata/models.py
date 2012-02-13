@@ -15,5 +15,4 @@ class Tweet(models.Model):
         candidates = models.ManyToManyField('Candidate')       
 
 class URL(models.Model):
-	url_id = models.IntegerField()
 	url = models.TextField()
