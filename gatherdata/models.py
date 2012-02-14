@@ -6,7 +6,6 @@ class Candidate(models.Model):
 	bio = models.TextField()
 
 class Tweet(models.Model):
-	id = models.IntegerField(primary_key=True)
         created_at = models.DateTimeField()
         text = models.TextField()
         user = models.CharField(max_length=200)

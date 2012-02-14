@@ -1,12 +1,4 @@
 from django.core.management import setup_environ
-
-# If app is not in your PYTHONPATH, append it to sys.path
-#import sys
-#import os
-#print os.path.join(os.path.abspath('.'))
-# sys.path.append('/Users/mike/Documents/candidatefeed/')
-
-# This must be AFTER you update sys.path
 import settings
 setup_environ(settings)
 
@@ -20,16 +12,21 @@ class TweetParser:
 		self.status = status
 
 	def save(self):
-		urlstr = ''
+		urlstr = None
 		for url in self.status.entities['urls']:
 			urlstr = url['expanded_url']
 		print self.status.text
 		
-		if len(urlstr) > 0:
+		url = None
+		if urlstr is not None:
 			url = URL(url=urlstr)
 			url.save()
-		candidate = Candidate.objects.filter(name__endswith='Obama')
-		newtweet = Tweet(created_at=self.status.created_at, text=self.status.text, user=self.status.user.screen_name, raw_json=self.status.json, urls=[url], candidates=[candidate])
+		candidate = Candidate.objects.get(name__endswith='Obama')
+		newtweet = Tweet(created_at=self.status.created_at, text=self.status.text, user=self.status.user.screen_name, raw_json=self.status.json)
+		newtweet.save()
+		newtweet.candidates.add(candidate)
+		if url is not None:
+			newtweet.urls.add(url)
 		newtweet.save()
 		
 
@@ -48,16 +45,17 @@ def get_tweets(keyword):
 	stream = Stream(auth, listener)
 	stream.filter(track=[keyword])
 
+# Adding the raw json to the tweepy Status object - custom parse method
 @classmethod
 def parse(cls, api, raw):
 	status = cls.first_parse(api, raw)
 	setattr(status, 'json', json.dumps(raw))
 	return status
 
+# Adding the raw json to the tweepy Status object - injecting the custom parse method
 def init_tweepy():
-        print 'Extending tweepy'
 	tweepy.models.Status.first_parse = tweepy.models.Status.parse
 	tweepy.models.Status.parse = parse
 
 if __name__ == "__main__":	
-	get_tweets('Obama')
+	get_tweets('Mitt Romney')
